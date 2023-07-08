@@ -1,0 +1,41 @@
+﻿@page
+@model IndexModel
+
+<h1 class="display-4">Logger data</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>IP Address and Time</th>
+        <th>Process List</th>
+        <th>Window List</th>
+        <th>Active Window</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var data in Model.AllData)
+    {
+        <tr>
+            <td>@data.Key</td>
+            <td>
+                @foreach (var process in data.Value["ProcessList"])
+                {
+                    <p>@process</p>
+                }
+            </td>
+            <td>
+                @foreach (var window in data.Value["WindowList"])
+                {
+                    <p>@window</p>
+                }
+            </td>
+            <td>
+                @foreach (var activeWindow in data.Value["ActiveWindow"])
+                {
+                    <p>@activeWindow</p>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
