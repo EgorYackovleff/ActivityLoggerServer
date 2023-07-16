@@ -1,5 +1,8 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace ServerLogger.Controllers;
 
@@ -46,4 +49,47 @@ public class WorkActivityController : ControllerBase
 
         return Ok();
     }
+    
+    
+    [HttpPost("screenshot")]
+    public IActionResult Screenshot()
+    {
+        try
+        {
+            byte[] imageData;
+
+            using (var reader = new BinaryReader(Request.Body))
+                imageData = reader.ReadBytes((int)Request.ContentLength);
+
+            var ipAddressAndTime = HttpContext.Connection.RemoteIpAddress + " " + DateTime.UtcNow;
+            var screenshotPath = SaveScreenshot(ipAddressAndTime, imageData);
+
+            _dataService.SaveClientScreenshot(ipAddressAndTime, screenshotPath);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    private string SaveScreenshot(string ipAddressAndTime, byte[] imageData)
+    {
+        var screenshotsDirectory = "Screenshots"; // Update this to the desired directory to save the screenshots
+        if (!Directory.Exists(screenshotsDirectory))
+            Directory.CreateDirectory(screenshotsDirectory);
+
+        var screenshotFileName = $"{ipAddressAndTime}_screenshot.jpg";
+        var screenshotPath = Path.Combine(screenshotsDirectory, screenshotFileName);
+
+        using (var stream = new MemoryStream(imageData))
+        using (var image = Image.FromStream(stream))
+        {
+            image.Save(screenshotPath, ImageFormat.Jpeg);
+        }
+
+        return screenshotPath;
+    }
+    
 }

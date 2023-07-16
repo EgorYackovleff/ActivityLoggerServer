@@ -6,6 +6,7 @@ public class DataService
     private readonly Dictionary<string, List<string>> processListByipAddressAndTime;
     private readonly Dictionary<string, List<string>> windowListByipAddressAndTime;
     private readonly Dictionary<string, string> activeWindowByipAddressAndTime;
+    private readonly Dictionary<string, string> screenshotsByipAddressAndTime;
 
     public DataService()
     {
@@ -23,6 +24,12 @@ public class DataService
 
         processListByipAddressAndTime[ipAddressAndTime].Add(process);
     }
+    
+    public void SaveClientScreenshot(string ipAddressAndTime, string path)
+    {
+        screenshotsByipAddressAndTime[ipAddressAndTime] = path;
+    }
+    
 
     public void AddWindow(string ipAddressAndTime, string window)
     {
