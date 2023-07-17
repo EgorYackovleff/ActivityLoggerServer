@@ -1,8 +1,8 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
-using System.Drawing;
-using System.Drawing.Imaging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace ServerLogger.Controllers;
 
@@ -76,17 +76,16 @@ public class WorkActivityController : ControllerBase
 
     private string SaveScreenshot(string ipAddressAndTime, byte[] imageData)
     {
-        var screenshotsDirectory = "Screenshots"; // Update this to the desired directory to save the screenshots
+        var screenshotsDirectory = "Screenshots"; 
         if (!Directory.Exists(screenshotsDirectory))
             Directory.CreateDirectory(screenshotsDirectory);
 
         var screenshotFileName = $"{ipAddressAndTime}_screenshot.jpg";
         var screenshotPath = Path.Combine(screenshotsDirectory, screenshotFileName);
 
-        using (var stream = new MemoryStream(imageData))
-        using (var image = Image.FromStream(stream))
+        using (var image = Image.Load<Rgba32>(imageData))
         {
-            image.Save(screenshotPath, ImageFormat.Jpeg);
+            image.Save(screenshotPath);
         }
 
         return screenshotPath;
