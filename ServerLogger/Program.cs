@@ -1,43 +1,20 @@
-
-// // Configure the HTTP request pipeline.
-// if (!app.Environment.IsDevelopment())
-// {
-//     app.UseExceptionHandler("/Error");
-//     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//     app.UseHsts();
-// }
-//
-// app.UseHttpsRedirection();
-// app.UseStaticFiles();
-//
-// app.UseRouting();
-//
-// app.UseAuthorization();
-//
-// app.MapRazorPages();
-//
-// app.Run();
-
-using System.Net;
-using System.Text;
-using Microsoft.AspNetCore.Builder;
-
 namespace ServerLogger;
 
 public static class Program
 {
-    static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
-        var host = new WebHostBuilder()
-            .UseKestrel()
-            .UseUrls("http://127.0.0.1:5001")  // Укажите желаемый адрес и порт сервера
-            .ConfigureServices(ConfigureServices)
-            .Configure(Configure)
-            .Build();
+        var builder = WebApplication.CreateBuilder(args);
 
-        await host.RunAsync();
+        ConfigureServices(builder.Services);
+
+        var app = builder.Build();
+
+        Configure(app);
+
+        app.Run();
     }
-    
+
     static void ConfigureServices(IServiceCollection services)
     {
         services.AddControllers();
@@ -47,21 +24,24 @@ public static class Program
 
     static void Configure(IApplicationBuilder app)
     {
+        app.Use(async (context, next) =>
+        {
+            context.Request.EnableBuffering();
+            await next();
+        });
+
+        app.UseStaticFiles();
+
         app.UseRouting();
 
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
             endpoints.MapRazorPages();
-
         });
-        
-            app.UseHttpsRedirection();
-    app.UseStaticFiles();
 
-    app.UseRouting();
+        app.UseHttpsRedirection();
 
-    app.UseAuthorization();
-
+        app.UseAuthorization();
     }
 }

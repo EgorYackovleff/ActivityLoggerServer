@@ -13,6 +13,7 @@ public class DataService
         processListByipAddressAndTime = new Dictionary<string, List<string>>();
         windowListByipAddressAndTime = new Dictionary<string, List<string>>();
         activeWindowByipAddressAndTime = new Dictionary<string, string>();
+        screenshotsByipAddressAndTime = new Dictionary<string, string>();
     }
 
     public void AddProcess(string ipAddressAndTime, string process)
@@ -27,7 +28,7 @@ public class DataService
     
     public void SaveClientScreenshot(string ipAddressAndTime, string path)
     {
-        screenshotsByipAddressAndTime[ipAddressAndTime] = path;
+        screenshotsByipAddressAndTime[ipAddressAndTime] = path.Replace("wwwroot", "").Replace("\\", "/");
     }
     
 
@@ -76,6 +77,11 @@ public class DataService
         return string.Empty;
     }
     
+    public Dictionary<string, string> GetAllScreenShots()
+    {
+        return screenshotsByipAddressAndTime;
+    }
+    
     public Dictionary<string, Dictionary<string, List<string>>> GetAllData()
     {
         var allData = new Dictionary<string, Dictionary<string, List<string>>>();
@@ -86,7 +92,6 @@ public class DataService
             data["ProcessList"] = GetProcessList(ipAddressAndTime);
             data["WindowList"] = GetWindowList(ipAddressAndTime);
             data["ActiveWindow"] = new List<string> { GetActiveWindow(ipAddressAndTime) };
-
             allData[ipAddressAndTime] = data;
         }
 

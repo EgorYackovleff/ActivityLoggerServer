@@ -39,3 +39,31 @@
     }
     </tbody>
 </table>
+
+<!-- Table for Screenshots -->
+<h1 class="display-4">Screenshots</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>IP-адрес и время</th>
+        <th>Путь к скриншоту</th>
+        <th>Скриншот</th> <!-- Новый столбец для изображений -->
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var screenshotData in Model.AllScreenshots)
+    {
+        <tr>
+            <td>@screenshotData.Key</td>
+            <td>
+                <a href="@screenshotData.Value">Скриншот</a>
+            </td>
+            <td>
+                <!-- Загрузка изображения с использованием пути к скриншоту в качестве URL -->
+                <img src="@screenshotData.Value" alt="Скриншот" style="max-width: 300px; max-height: 200px;" />
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>added

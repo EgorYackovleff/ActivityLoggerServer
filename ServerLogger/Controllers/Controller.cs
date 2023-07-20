@@ -1,26 +1,23 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using System.Drawing;
+using System.Drawing.Imaging;
+using Color = System.Drawing.Color;
 
 namespace ServerLogger.Controllers;
 
 [ApiController]
-[Route("api/workactivity")]
+[Route("api")]
 public class WorkActivityController : ControllerBase
 {
-
-    
     public WorkActivityController(DataService dataService)
     {
         _dataService = dataService;
     }
-    
-    static public List<string> Requests = new List<string>();
+
     private readonly DataService _dataService;
 
-    [HttpPost]
+    [HttpPost("workactivity")]
     public async Task<IActionResult> Callback()
     {
         string request;
@@ -33,40 +30,34 @@ public class WorkActivityController : ControllerBase
         var dataApplication = splitData[0];
         var dataWindows = splitData[1];
         var dataActiveWindow = splitData[2];
-        
-        
+
         var ipAddressAndTime = HttpContext.Connection.RemoteIpAddress + " " + DateTime.UtcNow;
 
-
-        
         _dataService.AddProcess(ipAddressAndTime, dataApplication);
         _dataService.AddWindow(ipAddressAndTime, dataWindows);
         _dataService.SetActiveWindow(ipAddressAndTime, dataActiveWindow);
         
-        
-        
-        Requests.Add(request);
-
         return Ok();
     }
-    
-    
-    [HttpPost("screenshot")]
-    public IActionResult Screenshot()
+
+
+    [HttpPost("screenshot/{width:int}/{height:int}")]
+    public async Task<IActionResult> Screenshot(int width, int height)
     {
         try
         {
-            byte[] imageData;
+            using (var memoryStream = new MemoryStream())
+            {
+                await Request.Body.CopyToAsync(memoryStream);
+                byte[] imageData = memoryStream.ToArray();
 
-            using (var reader = new BinaryReader(Request.Body))
-                imageData = reader.ReadBytes((int)Request.ContentLength);
+                var ipAddressAndTime = HttpContext.Connection.RemoteIpAddress + " " + DateTime.UtcNow;
 
-            var ipAddressAndTime = HttpContext.Connection.RemoteIpAddress + " " + DateTime.UtcNow;
-            var screenshotPath = SaveScreenshot(ipAddressAndTime, imageData);
+                var screenshotPath = await SaveScreenshot(imageData, width, height);
+                _dataService.SaveClientScreenshot(ipAddressAndTime, screenshotPath);
 
-            _dataService.SaveClientScreenshot(ipAddressAndTime, screenshotPath);
-
-            return Ok();
+                return Ok();
+            }
         }
         catch (Exception ex)
         {
@@ -74,21 +65,44 @@ public class WorkActivityController : ControllerBase
         }
     }
 
-    private string SaveScreenshot(string ipAddressAndTime, byte[] imageData)
+    private async Task<string> SaveScreenshot(byte[] imageData, int width, int height)
     {
-        var screenshotsDirectory = "Screenshots"; 
+        var screenshotsDirectory = "wwwroot/Screenshots";
         if (!Directory.Exists(screenshotsDirectory))
             Directory.CreateDirectory(screenshotsDirectory);
 
-        var screenshotFileName = $"{ipAddressAndTime}_screenshot.jpg";
+        var screenshotFileName = $"{Guid.NewGuid()}_screenshot.png";
         var screenshotPath = Path.Combine(screenshotsDirectory, screenshotFileName);
 
-        using (var image = Image.Load<Rgba32>(imageData))
-        {
-            image.Save(screenshotPath);
-        }
+
+        using var image = GetDataPicture(width, height, imageData);
+        image.Save(screenshotPath, ImageFormat.Png);
+
 
         return screenshotPath;
     }
-    
+
+    public Bitmap GetDataPicture(int w, int h, byte[] data)
+    {
+        var pic = new Bitmap(w, h, PixelFormat.Format32bppArgb);
+
+        int arrayIndex = 0;
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                Color c = Color.FromArgb(
+                    data[arrayIndex],
+                    data[arrayIndex + 1],
+                    data[arrayIndex + 2],
+                    data[arrayIndex + 3]
+                );
+                pic.SetPixel(x, y, c);
+
+                arrayIndex += 4;
+            }
+        }
+
+        return pic;
+    }
 }

@@ -9,6 +9,7 @@ public class IndexModel : PageModel
     private readonly DataService _dataService;
 
     public Dictionary<string, Dictionary<string, List<string>>> AllData { get; set; }
+    public Dictionary<string, string> AllScreenshots { get; set; }
 
     public IndexModel(ILogger<IndexModel> logger, DataService dataService)
     {
@@ -19,5 +20,6 @@ public class IndexModel : PageModel
     public void OnGet()
     {
         AllData = _dataService.GetAllData();
+        AllScreenshots = _dataService.GetAllScreenShots();
     }
 }
